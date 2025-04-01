@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: database
-        image: docker.io/amritrathore/project:amrit-database-2.0
+        image: docker.io/amritrathore/project:amrit-database-1.0
         ports:
         - containerPort: 5432
         volumeMounts:
