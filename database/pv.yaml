@@ -9,3 +9,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: azurefile-premium
+  hostPath:
+    path: "/mnt/data"
