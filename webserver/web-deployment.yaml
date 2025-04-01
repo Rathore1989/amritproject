@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: web-server
-        image: docker.io/amritrathore/project:amrit-webserver-2.0
+        image: docker.io/amritrathore/project:amrit-webserver-1.0
         ports:
         - containerPort: 80
         env:
