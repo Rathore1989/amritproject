@@ -8,5 +8,6 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: azurefile-premium
   hostPath:
     path: "/mnt/data"
