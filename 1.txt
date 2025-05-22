@@ -1,0 +1,16 @@
+# Create a self-signed cert
+$cert = New-SelfSignedCertificate -DnsName "10.135.78.18" -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddYears(1)
+$thumb = $cert.Thumbprint
+
+# Remove existing HTTPS listeners (optional cleanup)
+winrm delete winrm/config/Listener?Address=*+Transport=HTTPS 2>$null
+
+# Create the new listener with proper syntax (note: no PowerShell hashtable)
+winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname='10.135.78.18'; CertificateThumbprint='$thumb'; Port='5986'}"
+
+# Enable necessary settings
+Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $false
+Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
+
+# Restart WinRM
+Restart-Service WinRM
