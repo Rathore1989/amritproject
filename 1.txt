@@ -1,16 +1,35 @@
-# Create a self-signed cert
-$cert = New-SelfSignedCertificate -DnsName "10.135.78.18" -CertStoreLocation "Cert:\LocalMachine\My" -NotAfter (Get-Date).AddYears(1)
+# Configuration
+$ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '169.*' -and $_.InterfaceAlias -notlike '*vEthernet*' }).IPAddress[0]
+
+# Generate Self-Signed Certificate
+$cert = New-SelfSignedCertificate `
+    -DnsName $ip `
+    -CertStoreLocation "Cert:\LocalMachine\My" `
+    -NotAfter (Get-Date).AddYears(1)
+
+# Get Thumbprint
 $thumb = $cert.Thumbprint
 
-# Remove existing HTTPS listeners (optional cleanup)
+# Remove Existing HTTPS Listeners
 winrm delete winrm/config/Listener?Address=*+Transport=HTTPS 2>$null
 
-# Create the new listener with proper syntax (note: no PowerShell hashtable)
-winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname='10.135.78.18'; CertificateThumbprint='$thumb'; Port='5986'}"
+# Create HTTPS Listener
+winrm create winrm/config/Listener?Address=*+Transport=HTTPS @{
+    CertificateThumbprint = "$thumb";
+    Hostname = "$ip";
+    Port = "5986"
+}
 
-# Enable necessary settings
+# Enable WinRM Settings
 Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $false
 Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
+
+# Set TrustedHosts (optional if you script connection with -SkipCNCheck)
+Set-Item -Path WSMan:\localhost\Client\TrustedHosts -Value "*" -Force
+
+# Open Firewall for WinRM over HTTPS
+New-NetFirewallRule -Name "WinRM_HTTPS" -DisplayName "WinRM over HTTPS" `
+    -Protocol TCP -LocalPort 5986 -Direction Inbound -Action Allow
 
 # Restart WinRM
 Restart-Service WinRM
